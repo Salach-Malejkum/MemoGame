@@ -1,0 +1,34 @@
+{
+    "name": "PlayerControlls",
+    "maps": [
+        {
+            "name": "Player",
+            "id": "11959e1d-6fd9-4511-bd59-5fecf8f238ef",
+            "actions": [
+                {
+                    "name": "Restart",
+                    "type": "Button",
+                    "id": "1e75b1ec-940d-40ba-a249-48519dc903fc",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "3c3bed41-d6fa-43f6-bede-a6df88ab1578",
+                    "path": "<Keyboard>/r",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Restart",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}

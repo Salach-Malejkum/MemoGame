@@ -182,7 +182,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void RestarGame()
+    public void RestarGame()
     {
         ClearTable();
         endGameText.enabled = false;

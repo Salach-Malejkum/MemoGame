@@ -7,39 +7,39 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    public static GameManager Instance { get; private set; }
+
     public TextMeshProUGUI scoreText;
     public TextMeshProUGUI sizeInfoText;
     public TextMeshProUGUI endGameText;
-    public Button newGameButton;
     public Button restartButton;
-    public Button mode2x2Button;
-    public Button mode2x4Button;
-    public Button mode4x4Button;
     public Object[] cardPrefabs;
-    ArrayList spawnedCards;
-
-    private int score = 0;
-    private bool gameStarted = false;
+    public ArrayList spawnedCards;
+    public int score = 0;
+    public bool gameStarted = false;
     public bool locked = false;
     public bool wait = false;
-    // Start is called before the first frame update
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else if (Instance != this)
+        {
+            Destroy(gameObject);
+        }
+    }
     void Start()
     {
         cardPrefabs = Resources.LoadAll("Prefabs/Cards", typeof(GameObject));
-        
-        newGameButton.onClick.AddListener(ChooseMode);
-        restartButton.onClick.AddListener(RestarGame);
-        mode2x2Button.onClick.AddListener(Mode2x2);
-        mode2x4Button.onClick.AddListener(Mode2x4);
-        mode4x4Button.onClick.AddListener(Mode4x4);
 
-        restartButton.gameObject.SetActive(false);
-        mode2x2Button.gameObject.SetActive(false);
-        mode2x4Button.gameObject.SetActive(false);
-        mode4x4Button.gameObject.SetActive(false);
-        scoreText.enabled = false;
-        sizeInfoText.enabled = false;
-        endGameText.enabled = false;
+        // restartButton.gameObject.SetActive(false);
+        // scoreText.enabled = false;
+        // sizeInfoText.enabled = false;
+        // endGameText.enabled = false;
         spawnedCards = new ArrayList();
     }
 
@@ -163,17 +163,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void ChooseMode()
-    {
-        spawnedCards = new ArrayList();
-        newGameButton.gameObject.SetActive(false);
-        sizeInfoText.enabled = true;
-        mode2x2Button.gameObject.SetActive(true);
-        mode2x4Button.gameObject.SetActive(true);
-        mode4x4Button.gameObject.SetActive(true);
-    }
-
-    void ClearTable()
+    public void ClearTable()
     {
         for (int i = 0; i < spawnedCards.Count; i++)
         {
@@ -182,28 +172,16 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void RestarGame()
+    public void PrepareGameInfo()
     {
-        ClearTable();
-        endGameText.enabled = false;
-        gameStarted = false;
-        score = 0;
-        ChooseMode();
-    }
-
-    void PrepareGameInfo()
-    {
-        mode2x2Button.gameObject.SetActive(false);
-        mode2x4Button.gameObject.SetActive(false);
-        mode4x4Button.gameObject.SetActive(false);
         sizeInfoText.enabled = false;
 
         restartButton.gameObject.SetActive(true);
         scoreText.SetText("Score: " + score);
-        scoreText.enabled = true;
+        scoreText.gameObject.SetActive(true);
     }
 
-    void ChooseCards(ref int[] initCards, ref HashSet<int> chosenCards, int rows, int columns)
+    public void ChooseCards(ref int[] initCards, ref HashSet<int> chosenCards, int rows, int columns)
     {
         for (int i = 0; i < rows * columns / 2; i++)
         {
@@ -216,79 +194,28 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void Mode2x2()
+    public void InitateGame(int rows, int columns)
     {
         PrepareGameInfo();
         gameStarted = true;
-        int [] initCards = new int[2];
+        int numOfPairs = rows * columns / 2;
+        int [] initCards = new int[numOfPairs];
         HashSet<int> chosenCards = new HashSet<int>();
-        ChooseCards(ref initCards, ref chosenCards, 2, 2);
+        ChooseCards(ref initCards, ref chosenCards, rows, columns);
 
-        int [] chosenCardsInt = new int [2];
+        int [] chosenCardsInt = new int [numOfPairs];
         chosenCards.CopyTo(chosenCardsInt);
 
-        for (int row = 0; row < 2; row++)
+        for (int row = 0; row < rows; row++)
         {
-            for (int column = 0; column < 2; column++)
+            for (int column = 0; column < columns; column++)
             {
-                int rInt = Random.Range(0, 2);
+                int rInt = Random.Range(0, numOfPairs);
                 while (initCards[rInt] == 0)
                 {
-                    rInt = Random.Range(0, 2);
+                    rInt = Random.Range(0, numOfPairs);
                 }
-                spawnedCards.Add(Instantiate(cardPrefabs[chosenCardsInt[rInt]], new Vector3(800 - 100 * column, 480 - 70 * row, 0), Quaternion.identity));
-                initCards[rInt]--;
-            }
-        }
-    }
-    
-    void Mode2x4()
-    {
-        PrepareGameInfo();
-        gameStarted = true;
-        int [] initCards = new int[4];
-        HashSet<int> chosenCards = new HashSet<int>();
-        ChooseCards(ref initCards, ref chosenCards, 2, 4);
-
-        int [] chosenCardsInt = new int [4];
-        chosenCards.CopyTo(chosenCardsInt);
-
-        for (int row = 0; row < 2; row++)
-        {
-            for (int column = 0; column < 4; column++)
-            {
-                int rInt = Random.Range(0, 4);
-                while (initCards[rInt] == 0)
-                {
-                    rInt = Random.Range(0, 4);
-                }
-                spawnedCards.Add(Instantiate(cardPrefabs[chosenCardsInt[rInt]], new Vector3(800 - 100 * column, 480 - 70 * row, 0), Quaternion.identity));
-                initCards[rInt]--;
-            }
-        }
-    }
-
-    void Mode4x4()
-    {
-        PrepareGameInfo();
-        gameStarted = true;
-        int [] initCards = new int[8];
-        HashSet<int> chosenCards = new HashSet<int>();
-        ChooseCards(ref initCards, ref chosenCards, 4, 4);
-
-        int [] chosenCardsInt = new int [8];
-        chosenCards.CopyTo(chosenCardsInt);
-
-        for (int row = 0; row < 4; row++)
-        {
-            for (int column = 0; column < 4; column++)
-            {
-                int rInt = Random.Range(0, 8);
-                while (initCards[rInt] == 0)
-                {
-                    rInt = Random.Range(0, 8);
-                }
-                spawnedCards.Add(Instantiate(cardPrefabs[chosenCardsInt[rInt]], new Vector3(800 - 100 * column, 480 - 70 * row, 0), Quaternion.identity));
+                spawnedCards.Add(Instantiate(Instance.cardPrefabs[chosenCardsInt[rInt]], new Vector3(800 - 100 * column, 480 - 70 * row, 0), Quaternion.identity));
                 initCards[rInt]--;
             }
         }

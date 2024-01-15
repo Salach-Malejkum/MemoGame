@@ -9,18 +9,18 @@ public class ModesScript : MonoBehaviour
     public void Mode2x2()
     {
         chooseGamePanel.SetActive(false);
-        GameManager.Instance.InitateGame(2, 2);
+        GameManager.Instance.InitiateGame(2, 2);
     }
     
     public void Mode2x4()
     {
         chooseGamePanel.SetActive(false);
-        GameManager.Instance.InitateGame(2, 4);
+        GameManager.Instance.InitiateGame(2, 4);
     }
 
     public void Mode4x4()
     {
         chooseGamePanel.SetActive(false);
-        GameManager.Instance.InitateGame(4, 4);
+        GameManager.Instance.InitiateGame(4, 4);
     }
 }

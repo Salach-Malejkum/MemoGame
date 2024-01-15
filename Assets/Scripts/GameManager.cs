@@ -8,7 +8,7 @@ using UnityEngine.UI;
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
-
+    public Canvas canvas;
     public TextMeshProUGUI scoreText;
     public TextMeshProUGUI sizeInfoText;
     public TextMeshProUGUI endGameText;
@@ -32,135 +32,118 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
-    void Start()
+    private void Start()
     {
         cardPrefabs = Resources.LoadAll("Prefabs/Cards", typeof(GameObject));
-
-        // restartButton.gameObject.SetActive(false);
-        // scoreText.enabled = false;
-        // sizeInfoText.enabled = false;
-        // endGameText.enabled = false;
         spawnedCards = new ArrayList();
     }
 
     // Update is called once per frame
-    void Update()
+    private void Update()
     {
-        if (gameStarted)
+        if (!gameStarted)
+            return;
+
+        CheckWinLose();
+
+        if (locked && !wait)
         {
-            CheckWinLose();
+            StartCoroutine(CheckCards());
+        }
+        else if (!wait)
+        {
+            int clickedCards = CountClickedCards();
+            ManageClickedCards(clickedCards);
+        }
+    }
 
-            scoreText.SetText("Score: " + score);
-            if (locked && !wait)
+    private int CountClickedCards()
+    {
+        int clickedCards = 0;
+        foreach (GameObject card in spawnedCards)
+        {
+            if (card != null && card.gameObject.activeSelf && card.gameObject.GetComponent<CardScript>().IsFlipped)
             {
-               StartCoroutine(CheckCards());
-            }
-
-            if (!wait)
-            {
-                int clikedCards = 0;
-                for (int i = 0; i < spawnedCards.Count; i++)
-                {
-                    if (spawnedCards[i] != null)
-                    {
-                        GameObject obj = spawnedCards[i] as GameObject;
-                        if (!obj.transform.GetChild(1).gameObject.gameObject.activeSelf && obj.gameObject.activeSelf)
-                        {
-                            clikedCards++;
-                            if (clikedCards == 2)
-                            {
-                                locked = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (clikedCards >= 2)
-                    locked = true;
-                else 
-                    locked = false;
+                clickedCards++;
             }
         }
+        return clickedCards;
+    }
+
+    private void ManageClickedCards(int clikedCards)
+    {
+        if (clikedCards >= 2)
+            locked = true;
+        else
+            locked = false;
     }
 
     IEnumerator CheckCards()
     {
         GameObject card1 = null;
         GameObject card2 = null;
-        for (int i = 0; i < spawnedCards.Count; i++)
+        
+        foreach (GameObject card in spawnedCards)
         {
-            if (spawnedCards[i] != null)
+            if (card != null && card.gameObject.GetComponent<CardScript>().IsFlipped)
             {
-                GameObject tmp = spawnedCards[i] as GameObject;
-                if (!tmp.transform.GetChild(1).gameObject.gameObject.activeSelf && tmp.gameObject.activeSelf)
-                {
-                    if (card1 == null)
-                    {
-                        card1 = spawnedCards[i] as GameObject;
-                    }
-                    else
-                    {
-                        card2 = spawnedCards[i] as GameObject;
-                    }
-                }
+                if (card1 == null)
+                    card1 = card;
+                else
+                    card2 = card;
             }
         }
         
-        Debug.Log("Card1: " + card1.name);
-        Debug.Log("Card2: " + card2.name);
-        Debug.Log(card1.name == card2.name);
+        wait = true;
+        yield return new WaitForSeconds(1.0f);
+        
         if (card1.name == card2.name)
         {
-            wait = true;
-            yield return new WaitForSeconds(0.5f);
             card1.gameObject.SetActive(false);
             card2.gameObject.SetActive(false);
-            score += 10;
-            locked = false;
-            wait = false;
+            UpdateScore(10);
         }
         else
         {
-            wait = true;
-            yield return new WaitForSeconds(1.0f);
-            card1.transform.GetChild(1).gameObject.SetActive(true);
-            card2.transform.GetChild(1).gameObject.SetActive(true);
-            score -= 2;
-            locked = false;
-            wait = false;
+            card1.gameObject.GetComponent<FlipCard>().Flip();
+            card2.gameObject.GetComponent<FlipCard>().Flip();
+            UpdateScore(-2);
         }
         
+        locked = false;
+        wait = false;
     }
 
     void CheckWinLose()
     {
         if (score <= -10)
         {
-            endGameText.SetText("YOU LOST");
-            endGameText.enabled = true;
+            ShowEndGameText("YOU LOST");
             gameStarted = false;
             ClearTable();
         }
+        
         int countCards = 0;
-        for (int i = 0; i < spawnedCards.Count; i++)
+        foreach (GameObject card in spawnedCards)
         {
-            if (spawnedCards[i] != null)
+            if (card != null && card.gameObject.activeSelf)
             {
-                GameObject tmp = spawnedCards[i] as GameObject;
-                if (tmp.gameObject.activeSelf)
-                {
-                    countCards++;
-                }
+                countCards++;
             }
         }
 
         if (countCards == 0)
         {
-            endGameText.SetText("YOU WON");
-            endGameText.enabled = true;
+            ShowEndGameText("YOU WON");
             gameStarted = false;
             ClearTable();
         }
+    }
+
+    private void ShowEndGameText(string text)
+    {
+        endGameText.SetText(text);
+        endGameText.gameObject.SetActive(true);
     }
 
     public void ClearTable()
@@ -183,41 +166,67 @@ public class GameManager : MonoBehaviour
 
     public void ChooseCards(ref int[] initCards, ref HashSet<int> chosenCards, int rows, int columns)
     {
-        for (int i = 0; i < rows * columns / 2; i++)
+        int numOfPairs = rows * columns / 2;
+        for (int i = 0; i < numOfPairs; i++)
         {
             initCards[i] = 2;
         }
-        
-        while (chosenCards.Count != rows * columns / 2)
+
+        while (chosenCards.Count != numOfPairs)
         {
-            chosenCards.Add(Random.Range(0, 8));
+            chosenCards.Add(Random.Range(0, numOfPairs));
         }
     }
 
-    public void InitateGame(int rows, int columns)
+    public void InitiateGame(int rows, int columns)
     {
         PrepareGameInfo();
         gameStarted = true;
         int numOfPairs = rows * columns / 2;
-        int [] initCards = new int[numOfPairs];
+        int[] initCards = new int[numOfPairs];
         HashSet<int> chosenCards = new HashSet<int>();
         ChooseCards(ref initCards, ref chosenCards, rows, columns);
 
-        int [] chosenCardsInt = new int [numOfPairs];
+        int[] chosenCardsInt = new int[numOfPairs];
         chosenCards.CopyTo(chosenCardsInt);
 
-        for (int row = 0; row < rows; row++)
+        float screenWidth = Screen.width;
+        float screenHeight = Screen.height;
+
+        int spawnableRows = 2;
+        int spawnableColumns = numOfPairs;
+        // Calculate the size of the card based on the screen size
+        float cardWidth = screenWidth / (spawnableColumns + 1); // +1 for some padding
+        float cardHeight = screenHeight / (spawnableRows + 1); // +1 for some padding
+
+        // Calculate the total width and height of all the cards
+        float totalCardWidth = spawnableColumns * cardWidth;
+        float totalCardHeight = spawnableRows * cardHeight;
+
+        // Calculate the initial position and card offset
+        Vector3 initialPosition = new Vector3(cardWidth, totalCardHeight, 0);
+        Vector3 cardOffset = new Vector3(cardWidth, -cardHeight, 0);
+
+        for (int row = 0; row < spawnableRows; row++)
         {
-            for (int column = 0; column < columns; column++)
+            for (int column = 0; column < spawnableColumns; column++)
             {
                 int rInt = Random.Range(0, numOfPairs);
                 while (initCards[rInt] == 0)
                 {
                     rInt = Random.Range(0, numOfPairs);
                 }
-                spawnedCards.Add(Instantiate(Instance.cardPrefabs[chosenCardsInt[rInt]], new Vector3(800 - 100 * column, 480 - 70 * row, 0), Quaternion.identity));
+                Vector3 spawnPosition = initialPosition + (Vector3)(cardOffset * new Vector2(column, row));
+                GameObject newCard = Instantiate(Instance.cardPrefabs[chosenCardsInt[rInt]], spawnPosition, Quaternion.identity, canvas.transform) as GameObject;
+                spawnedCards.Add(newCard);
                 initCards[rInt]--;
             }
         }
+    }
+
+    private void UpdateScore(int val)
+    {
+        score += val;
+        scoreText.SetText("Score: " + score);
     }
 }

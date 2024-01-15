@@ -5,21 +5,19 @@ using UnityEngine.EventSystems;
 
 public class FlipCard : MonoBehaviour, IPointerClickHandler
 {
-    GameManager script;
-    // Start is called before the first frame update
-    void Start()
-    {
-        script = GameObject.Find("GameManager").GetComponent<GameManager>();
-    }
+    private CardScript cardScript;
 
-    void Update()
+    private void Awake()
     {
-        
+        cardScript = GetComponent<CardScript>();
     }
-
+    public void Flip()
+    {
+        cardScript.IsFlipped = !cardScript.IsFlipped;
+    }
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (!script.locked && gameObject.activeSelf && !script.wait)
-            transform.GetChild(1).gameObject.SetActive(false);
+        if (!GameManager.Instance.locked && gameObject.activeSelf && !GameManager.Instance.wait)
+            Flip();
     }
 }

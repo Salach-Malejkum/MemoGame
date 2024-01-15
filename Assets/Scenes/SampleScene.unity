@@ -806,6 +806,7 @@ MonoBehaviour:
   gameStarted: 0
   locked: 0
   wait: 0
+  mainMenuPanel: {fileID: 2103536636}
 --- !u!4 &757502062
 Transform:
   m_ObjectHideFlags: 0

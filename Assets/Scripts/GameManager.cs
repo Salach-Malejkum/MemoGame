@@ -10,7 +10,6 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
     public Canvas canvas;
     public TextMeshProUGUI scoreText;
-    public TextMeshProUGUI sizeInfoText;
     public TextMeshProUGUI endGameText;
     public Button restartButton;
     public Object[] cardPrefabs;
@@ -33,19 +32,19 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
+
     private void Start()
     {
         cardPrefabs = Resources.LoadAll("Prefabs/Cards", typeof(GameObject));
         spawnedCards = new ArrayList();
     }
 
-    // Update is called once per frame
     private void Update()
     {
         if (!gameStarted)
             return;
 
-        CheckWinLose();
+        HandleWinLose();
 
         if (locked && !wait)
         {
@@ -114,16 +113,8 @@ public class GameManager : MonoBehaviour
         wait = false;
     }
 
-    void CheckWinLose()
-    {
-        if (score <= -10)
-        {
-            ShowEndGameText("YOU LOST");
-            gameStarted = false;
-            ClearTable();
-            GoToMainMenu();
-        }
-        
+    void HandleWinLose()
+    {      
         int countCards = 0;
         foreach (GameObject card in spawnedCards)
         {
@@ -133,10 +124,12 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        if (countCards == 0)
+        if (score <= -10 || countCards == 0)
         {
-            ShowEndGameText("YOU WON");
+            string endGameText = score <= -10 ? "YOU LOST" : "YOU WON";
+            ShowEndGameText(endGameText);
             gameStarted = false;
+            score = 0;
             ClearTable();
             GoToMainMenu();
         }

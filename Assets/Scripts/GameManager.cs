@@ -19,6 +19,7 @@ public class GameManager : MonoBehaviour
     public bool gameStarted = false;
     public bool locked = false;
     public bool wait = false;
+    [SerializeField] private GameObject mainMenuPanel;
 
     private void Awake()
     {
@@ -96,7 +97,8 @@ public class GameManager : MonoBehaviour
         
         wait = true;
         yield return new WaitForSeconds(1.0f);
-        
+        card1.gameObject.GetComponent<FlipCard>().Flip();
+        card2.gameObject.GetComponent<FlipCard>().Flip();
         if (card1.name == card2.name)
         {
             card1.gameObject.SetActive(false);
@@ -105,8 +107,6 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            card1.gameObject.GetComponent<FlipCard>().Flip();
-            card2.gameObject.GetComponent<FlipCard>().Flip();
             UpdateScore(-2);
         }
         
@@ -121,6 +121,7 @@ public class GameManager : MonoBehaviour
             ShowEndGameText("YOU LOST");
             gameStarted = false;
             ClearTable();
+            GoToMainMenu();
         }
         
         int countCards = 0;
@@ -137,7 +138,22 @@ public class GameManager : MonoBehaviour
             ShowEndGameText("YOU WON");
             gameStarted = false;
             ClearTable();
+            GoToMainMenu();
         }
+    }
+
+    private void GoToMainMenu()
+    {
+        StartCoroutine(LoadMainMenu());
+    }
+
+    IEnumerator LoadMainMenu()
+    {
+        restartButton.gameObject.SetActive(false);
+        yield return new WaitForSeconds(3.0f);
+        endGameText.gameObject.SetActive(false);
+        scoreText.gameObject.SetActive(false);
+        mainMenuPanel.SetActive(true);
     }
 
     private void ShowEndGameText(string text)
@@ -157,8 +173,6 @@ public class GameManager : MonoBehaviour
 
     public void PrepareGameInfo()
     {
-        sizeInfoText.enabled = false;
-
         restartButton.gameObject.SetActive(true);
         scoreText.SetText("Score: " + score);
         scoreText.gameObject.SetActive(true);
